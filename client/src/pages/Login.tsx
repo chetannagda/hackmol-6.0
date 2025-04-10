@@ -31,7 +31,8 @@ export default function Login() {
     setIsLoading(true);
     try {
       await login(values.email, values.password);
-      navigate("/dashboard");
+      // Note: The redirect is now handled by the AuthContext to ensure proper timing
+      // This prevents double redirects
     } catch (error) {
       console.error("Login error:", error);
       // Error is already handled in the AuthContext
@@ -98,12 +99,13 @@ export default function Login() {
                 {isLoading ? "Signing in..." : "Sign In"}
               </Button>
               <div className="text-center mt-4">
-                <span className="text-sm text-gray-600">Don't have an account?</span>
-                <Link href="/register">
-                  <a className="text-sm font-medium text-primary hover:text-primary/90 ml-1">
-                    Sign Up
-                  </a>
-                </Link>
+                <span className="text-sm text-gray-600">Don't have an account? </span>
+                <span 
+                  onClick={() => navigate("/register")} 
+                  className="text-sm font-medium text-primary hover:text-primary/90 ml-1 cursor-pointer"
+                >
+                  Sign Up
+                </span>
               </div>
             </form>
           </Form>

@@ -9,14 +9,16 @@ import {
 } from "firebase/auth";
 import { getDatabase, ref, set, push, get, query, orderByChild, limitToLast } from "firebase/database";
 
-// Firebase configuration with fallbacks for development
+// Firebase configuration with your credentials
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBLUCvRGjG8_8UeV6YJBcMo0MKt5mCBaTI",
-  authDomain: `${import.meta.env.VITE_FIREBASE_PROJECT_ID || "paysafe-demo"}.firebaseapp.com`,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "paysafe-demo",
-  storageBucket: `${import.meta.env.VITE_FIREBASE_PROJECT_ID || "paysafe-demo"}.appspot.com`,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:123456789012:web:abcdef1234567890abcdef",
-  databaseURL: `https://${import.meta.env.VITE_FIREBASE_PROJECT_ID || "paysafe-demo"}-default-rtdb.asia-southeast1.firebasedatabase.app`
+  apiKey: "AIzaSyAxMC1m885flbWNESU6EMdGi-3VuPcyXcM",
+  authDomain: "hackmol-4be8a.firebaseapp.com",
+  projectId: "hackmol-4be8a",
+  storageBucket: "hackmol-4be8a.firebasestorage.app",
+  messagingSenderId: "1051733608050",
+  appId: "1:1051733608050:web:3019061d727189112e24eb",
+  measurementId: "G-Y3WWZVX2FN",
+  databaseURL: "https://hackmol-4be8a-default-rtdb.asia-southeast1.firebasedatabase.app"
 };
 
 // Console log for debugging environment variables
