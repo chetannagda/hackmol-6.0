@@ -9,7 +9,7 @@
       "phone": "6367426746",
       "id": 1,
       "upiId": null,
-      "walletBalance": 6802,
+      "walletBalance": 31802,
       "ethereumAddress": null,
       "createdAt": "2025-04-10T14:19:32.081Z"
     }
@@ -235,8 +235,42 @@
       "id": 13,
       "createdAt": "2025-04-10T19:49:20.406Z",
       "updatedAt": "2025-04-10T19:49:20.406Z"
+    },
+    "14": {
+      "senderId": 1,
+      "receiverId": null,
+      "receiverUpiId": null,
+      "receiverAccountNumber": "1223253547989",
+      "receiverIfscCode": "sbii79862",
+      "receiverEthAddress": null,
+      "amount": 5000,
+      "currency": "INR",
+      "type": "BANK",
+      "status": "PENDING",
+      "note": null,
+      "verificationCode": null,
+      "id": 14,
+      "createdAt": "2025-04-10T23:54:36.461Z",
+      "updatedAt": "2025-04-10T23:54:36.461Z"
+    },
+    "15": {
+      "senderId": 1,
+      "receiverId": null,
+      "receiverUpiId": null,
+      "receiverAccountNumber": "1223253547989",
+      "receiverIfscCode": "sbii79862",
+      "receiverEthAddress": null,
+      "amount": 5000,
+      "currency": "INR",
+      "type": "BANK",
+      "status": "PENDING",
+      "note": null,
+      "verificationCode": null,
+      "id": 15,
+      "createdAt": "2025-04-10T23:54:36.508Z",
+      "updatedAt": "2025-04-10T23:54:36.508Z"
     }
   },
   "currentUserId": 2,
-  "currentTransactionId": 14
+  "currentTransactionId": 16
 }
