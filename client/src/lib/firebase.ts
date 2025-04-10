@@ -9,15 +9,22 @@ import {
 } from "firebase/auth";
 import { getDatabase, ref, set, push, get, query, orderByChild, limitToLast } from "firebase/database";
 
-// Firebase configuration
+// Firebase configuration with fallbacks for development
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.appspot.com`,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  databaseURL: `https://${import.meta.env.VITE_FIREBASE_PROJECT_ID}-default-rtdb.firebaseio.com`
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBLUCvRGjG8_8UeV6YJBcMo0MKt5mCBaTI",
+  authDomain: `${import.meta.env.VITE_FIREBASE_PROJECT_ID || "paysafe-demo"}.firebaseapp.com`,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "paysafe-demo",
+  storageBucket: `${import.meta.env.VITE_FIREBASE_PROJECT_ID || "paysafe-demo"}.appspot.com`,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:123456789012:web:abcdef1234567890abcdef",
+  databaseURL: `https://${import.meta.env.VITE_FIREBASE_PROJECT_ID || "paysafe-demo"}-default-rtdb.asia-southeast1.firebasedatabase.app`
 };
+
+// Console log for debugging environment variables
+console.log("Firebase Config:", {
+  apiKey: firebaseConfig.apiKey ? "API_KEY_SET" : "API_KEY_NOT_SET",
+  projectId: firebaseConfig.projectId,
+  databaseURL: firebaseConfig.databaseURL
+});
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
