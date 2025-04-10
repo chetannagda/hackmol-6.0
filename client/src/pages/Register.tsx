@@ -43,6 +43,8 @@ export default function Register() {
         email: values.email,
         phone: values.phone,
         password: values.password,
+        confirmPassword: values.confirmPassword,
+        agreeToTerms: values.agreeToTerms
       });
       
       navigate("/dashboard");

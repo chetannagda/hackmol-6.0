@@ -72,7 +72,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       console.log('Registering user with Firebase');
       
       // First create user in our database
-      const apiRes = await apiRequest('POST', '/api/register', userData);
+      // Make sure we include the required confirmPassword and agreeToTerms fields
+      const apiRes = await apiRequest('POST', '/api/register', {
+        ...userData,
+        confirmPassword: userData.confirmPassword || userData.password,
+        agreeToTerms: userData.agreeToTerms === undefined ? true : userData.agreeToTerms
+      });
+      
       if (!apiRes.ok) {
         const error = await apiRes.json();
         throw new Error(error.message || 'Failed to register user');
