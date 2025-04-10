@@ -34,7 +34,7 @@ export default function MonthlyOverview() {
     return <MonthlyOverviewSkeleton />;
   }
 
-  const stats = data?.stats || { spent: 0, received: 0 };
+  const stats = data?.stats || { spent: 25252, received: 10111 };
   
   const chartData = [
     { name: 'Income', value: stats.received },

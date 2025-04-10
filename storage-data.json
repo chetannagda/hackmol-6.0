@@ -1,0 +1,20 @@
+{
+  "users": {
+    "1": {
+      "username": "chetannagda",
+      "password": "111111",
+      "email": "chetan@gmail.com",
+      "firstName": "Chetan",
+      "lastName": "Nagda",
+      "phone": "6367426746",
+      "id": 1,
+      "upiId": null,
+      "walletBalance": 0,
+      "ethereumAddress": null,
+      "createdAt": "2025-04-10T14:19:32.081Z"
+    }
+  },
+  "transactions": {},
+  "currentUserId": 2,
+  "currentTransactionId": 1
+}

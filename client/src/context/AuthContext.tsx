@@ -5,6 +5,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { User } from '@shared/schema';
 import { Shield, AlertTriangle, CheckCircle, Lock } from 'lucide-react';
 import { useLocation } from 'wouter';
+import { auth, database } from '@/lib/firebase'; // Correct Firebase configuration import
 
 interface AuthContextType {
   user: User | null;
@@ -248,7 +249,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             setLocation('/dashboard');
           }, 500);
         } else {
-          throw new Error('Failed to fetch user data from API');
+          // Handle 404 error specifically for missing user in database
+          if (res.status === 404) {
+            throw new Error('User profile not found in database. This may occur after a server restart. Please register again.');
+          } else {
+            throw new Error('Failed to fetch user data from API');
+          }
         }
       } else {
         throw new Error('User data not found');

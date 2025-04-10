@@ -73,12 +73,6 @@ export default function UpiVerificationModal({
         </DialogHeader>
         
         <div className="mb-6">
-          <div className="countdown-timer">
-            <div 
-              className="countdown-progress absolute h-full bg-primary"
-              style={{ width: `${percentLeft}%`, transition: 'width 1s linear' }}
-            ></div>
-          </div>
           <p className="text-sm text-gray-600 mt-2">
             Session expires in <span id="countdown-timer">{formatTime()}</span>
           </p>

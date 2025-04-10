@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { 
-  getAuth, 
+  getAuth,
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
   signOut as firebaseSignOut,
@@ -85,8 +85,10 @@ export const onAuthChange = (callback: (user: User | null) => void) => {
 // Database functions
 export const saveUserData = async (uid: string, userData: any) => {
   try {
-    console.log("Storing user data in Firebase Database");
+    console.log(`Storing user data in Firebase Database for UID: ${uid}`);
+    console.log('User Data:', userData);
     await set(ref(database, `users/${uid}`), userData);
+    console.log('User data successfully stored.');
     return true;
   } catch (error) {
     console.error("Error saving user data:", error);
@@ -111,12 +113,14 @@ export const saveTransaction = async (transaction: any) => {
 
 export const getUserData = async (uid: string) => {
   try {
-    console.log("Fetching user data from Firebase Database");
+    console.log(`Fetching user data from Firebase Database for UID: ${uid}`);
     const userRef = ref(database, `users/${uid}`);
     const snapshot = await get(userRef);
     if (snapshot.exists()) {
+      console.log('User data found:', snapshot.val());
       return snapshot.val();
     } else {
+      console.log('No user data found.');
       return null;
     }
   } catch (error) {
