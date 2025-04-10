@@ -6,16 +6,18 @@ import {
   ToastProvider,
   ToastTitle,
   ToastViewport,
-} from "@/components/ui/toast"
+  ToastWithIcon,
+  ToastIcon,
+} from "@/components/ui/toast-with-icon"
 
 export function Toaster() {
   const { toasts } = useToast()
 
   return (
     <ToastProvider>
-      {toasts.map(function ({ id, title, description, action, ...props }) {
+      {toasts.map(function ({ id, title, description, action, icon, ...props }) {
         return (
-          <Toast key={id} {...props}>
+          <ToastWithIcon key={id} icon={icon} {...props}>
             <div className="grid gap-1">
               {title && <ToastTitle>{title}</ToastTitle>}
               {description && (
@@ -24,7 +26,7 @@ export function Toaster() {
             </div>
             {action}
             <ToastClose />
-          </Toast>
+          </ToastWithIcon>
         )
       })}
       <ToastViewport />

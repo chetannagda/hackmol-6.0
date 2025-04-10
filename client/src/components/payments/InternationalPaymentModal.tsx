@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Info } from "lucide-react";
+import { Info, Shield, AlertTriangle, Globe, ArrowRightLeft, Boxes } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
@@ -17,6 +17,7 @@ import { formatCurrency } from "@/lib/utils";
 import { convertCurrency, estimateGas } from "@/lib/ethereum";
 import ProcessingModal from "./ProcessingModal";
 import SuccessModal from "./SuccessModal";
+import SecurityVerification from "./SecurityVerification";
 
 interface InternationalPaymentModalProps {
   isOpen: boolean;
@@ -37,13 +38,16 @@ type ConversionResult = {
 };
 
 export default function InternationalPaymentModal({ isOpen, onClose }: InternationalPaymentModalProps) {
-  const { user } = useAuth();
+  const { user, analyzeSecurity } = useAuth();
   const { toast } = useToast();
   
   const [showProcessing, setShowProcessing] = useState(false);
+  const [showSecurityCheck, setShowSecurityCheck] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [transactionDetails, setTransactionDetails] = useState<any>(null);
   const [conversionResult, setConversionResult] = useState<ConversionResult | null>(null);
+  const [formValues, setFormValues] = useState<z.infer<typeof formSchema> | null>(null);
+  const [gasEstimate, setGasEstimate] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -57,6 +61,7 @@ export default function InternationalPaymentModal({ isOpen, onClose }: Internati
 
   const watchAmount = form.watch("amount");
   const watchCurrency = form.watch("currency");
+  const watchWalletAddress = form.watch("walletAddress");
 
   // Update conversion when amount or currency changes
   useEffect(() => {
@@ -65,8 +70,20 @@ export default function InternationalPaymentModal({ isOpen, onClose }: Internati
         try {
           const result = await convertCurrency(watchAmount, watchCurrency);
           setConversionResult(result);
+          
+          // Also get gas estimate if wallet address is valid
+          if (watchWalletAddress && watchWalletAddress.startsWith('0x') && watchWalletAddress.length === 42) {
+            try {
+              const gas = await estimateGas(watchWalletAddress, result.toAmount.toString());
+              setGasEstimate(gas);
+            } catch (error) {
+              console.error("Error estimating gas:", error);
+              setGasEstimate(null);
+            }
+          }
         } catch (error) {
           console.error("Error converting currency:", error);
+          setConversionResult(null);
         }
       } else {
         setConversionResult(null);
@@ -74,7 +91,7 @@ export default function InternationalPaymentModal({ isOpen, onClose }: Internati
     };
 
     updateConversion();
-  }, [watchAmount, watchCurrency]);
+  }, [watchAmount, watchCurrency, watchWalletAddress]);
 
   const internationalPaymentMutation = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
@@ -85,36 +102,73 @@ export default function InternationalPaymentModal({ isOpen, onClose }: Internati
       setTransactionDetails(data.transaction);
       setShowProcessing(false);
       setShowSuccess(true);
+      
+      toast({
+        title: "Blockchain Transfer Complete",
+        description: `Your ${watchCurrency} has been converted to ETH and sent. Transaction confirmed on Ethereum blockchain.`,
+        icon: <Shield className="h-4 w-4 text-green-500" />,
+      });
     },
     onError: (error) => {
       setShowProcessing(false);
       toast({
         variant: "destructive",
-        title: "Payment Failed",
+        title: "Transfer Failed",
         description: error instanceof Error ? error.message : "An unexpected error occurred",
+        icon: <AlertTriangle className="h-4 w-4 text-red-500" />,
       });
     },
   });
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    setShowProcessing(true);
-    internationalPaymentMutation.mutate(values);
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setFormValues(values);
+    // First show security verification
+    setShowSecurityCheck(true);
+  };
+  
+  const handleSecurityVerificationComplete = (success: boolean) => {
+    setShowSecurityCheck(false);
+    
+    if (success && formValues) {
+      setShowProcessing(true);
+      // Add slight delay to make the process feel more secure
+      setTimeout(() => {
+        internationalPaymentMutation.mutate(formValues);
+      }, 800);
+    } else if (!success) {
+      toast({
+        variant: "destructive",
+        title: "Transaction Blocked",
+        description: "This international transfer was automatically blocked due to suspicious activity. Your funds are safe.",
+        icon: <AlertTriangle className="h-4 w-4 text-red-500" />,
+      });
+    }
   };
 
   const closeAll = () => {
     setShowProcessing(false);
+    setShowSecurityCheck(false);
     setShowSuccess(false);
+    setFormValues(null);
     form.reset();
     onClose();
   };
+  
+  // Determine if high-amount transfer for increased security scrutiny
+  const isHighAmount = formValues?.amount ? formValues.amount >= 15000 : false;
 
   return (
     <>
-      <Dialog open={isOpen && !showProcessing && !showSuccess} onOpenChange={onClose}>
+      <Dialog open={isOpen && !showProcessing && !showSecurityCheck && !showSuccess} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>International Payment</DialogTitle>
-            <DialogDescription>Send money abroad using Ethereum blockchain</DialogDescription>
+            <DialogTitle className="flex items-center gap-2">
+              <Globe className="h-5 w-5 text-primary" />
+              International Transfer
+            </DialogTitle>
+            <DialogDescription>
+              Send money globally via secure Ethereum blockchain
+            </DialogDescription>
           </DialogHeader>
           
           <Form {...form}>
@@ -182,29 +236,47 @@ export default function InternationalPaymentModal({ isOpen, onClose }: Internati
               </div>
               
               {conversionResult && (
-                <div className="bg-gray-50 p-4 rounded-md space-y-2">
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-md space-y-2 border border-blue-100">
+                  <div className="flex items-center justify-center pb-2">
+                    <div className="flex items-center gap-2 text-blue-700 font-medium">
+                      <ArrowRightLeft className="h-4 w-4 text-blue-600" />
+                      <span>Currency Conversion via Blockchain</span>
+                    </div>
+                  </div>
+                  
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Conversion Rate</span>
-                    <span className="text-sm font-medium">
+                    <span className="text-sm text-blue-700">Conversion Rate</span>
+                    <span className="text-sm font-medium text-blue-800">
                       1 ETH = {formatCurrency(conversionResult.rate, conversionResult.fromCurrency)}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Recipient Gets</span>
-                    <span className="text-sm font-medium">
-                      {conversionResult.toAmount.toFixed(6)} ETH
-                    </span>
+                    <span className="text-sm text-blue-700">Recipient Gets</span>
+                    <div className="flex items-center gap-1">
+                      <Cube className="h-3 w-3 text-blue-600" />
+                      <span className="text-sm font-medium text-blue-800">
+                        {conversionResult.toAmount.toFixed(6)} ETH
+                      </span>
+                    </div>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Fee</span>
-                    <span className="text-sm font-medium">
+                    <span className="text-sm text-blue-700">Network Fee</span>
+                    <span className="text-sm font-medium text-blue-800">
                       {formatCurrency(conversionResult.fee, conversionResult.fromCurrency)}
                     </span>
                   </div>
-                  <div className="pt-2 border-t">
+                  {gasEstimate && (
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-gray-700">Total Amount</span>
-                      <span className="text-sm font-semibold">
+                      <span className="text-sm text-blue-700">Est. Gas</span>
+                      <span className="text-sm font-medium text-blue-800">
+                        {gasEstimate} Gwei
+                      </span>
+                    </div>
+                  )}
+                  <div className="pt-2 border-t border-blue-200">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-blue-800">Total Amount</span>
+                      <span className="text-sm font-semibold text-blue-900">
                         {formatCurrency(
                           conversionResult.fromAmount + conversionResult.fee, 
                           conversionResult.fromCurrency
@@ -215,31 +287,53 @@ export default function InternationalPaymentModal({ isOpen, onClose }: Internati
                 </div>
               )}
               
-              <div className="text-sm text-gray-600 flex items-start space-x-2">
-                <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                <p>Transactions are secured via Ethereum blockchain technology.</p>
+              <div className="bg-green-50 p-3 rounded-md text-sm text-green-700 flex items-start space-x-2 border border-green-100">
+                <Shield className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />
+                <p>International transfers use Ethereum blockchain for enhanced security, speed, and lower fees than traditional banks.</p>
               </div>
               
               <div className="flex justify-end space-x-2 pt-4">
                 <DialogClose asChild>
                   <Button type="button" variant="outline">Cancel</Button>
                 </DialogClose>
-                <Button type="submit">Convert & Send</Button>
+                <Button 
+                  type="submit" 
+                  className="bg-gradient-to-r from-indigo-600 to-blue-700"
+                >
+                  Convert & Send Securely
+                </Button>
               </div>
             </form>
           </Form>
         </DialogContent>
       </Dialog>
 
+      {/* Security verification modal */}
+      <Dialog open={showSecurityCheck} onOpenChange={() => setShowSecurityCheck(false)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Security Verification</DialogTitle>
+          </DialogHeader>
+          
+          <SecurityVerification 
+            onVerificationComplete={handleSecurityVerificationComplete}
+            action="International Transfer"
+            amount={formValues?.amount}
+            recipient={formValues?.walletAddress}
+            highSecurity={isHighAmount}
+          />
+        </DialogContent>
+      </Dialog>
+
       <ProcessingModal 
         isOpen={showProcessing} 
-        title="Processing International Payment"
-        message="Converting currency and preparing blockchain transfer..."
+        title="Processing Blockchain Transfer"
+        message="Converting currency and preparing secure Ethereum transaction..."
         steps={[
           { id: "validate", label: "Validating wallet address", status: "complete" },
-          { id: "fraud", label: "Running fraud detection check", status: "processing" },
-          { id: "convert", label: "Converting currency", status: "pending" },
-          { id: "blockchain", label: "Processing on Ethereum blockchain", status: "pending" },
+          { id: "security", label: "Running blockchain security check", status: "processing" },
+          { id: "convert", label: "Converting to Ethereum", status: "pending" },
+          { id: "blockchain", label: "Creating blockchain transaction", status: "pending" },
         ]}
         onCancel={closeAll}
       />
