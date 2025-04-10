@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Info, Shield, AlertTriangle } from "lucide-react";
+import { Info, Shield, AlertTriangle, Key } from "lucide-react";
 import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -16,6 +16,7 @@ import ProcessingModal from "./ProcessingModal";
 import UpiVerificationModal from "./UpiVerificationModal";
 import SuccessModal from "./SuccessModal";
 import SecurityVerification from "./SecurityVerification";
+import { createPaymentVerification, getUserData, auth } from "@/lib/firebase";
 
 interface UpiPaymentModalProps {
   isOpen: boolean;
@@ -90,15 +91,65 @@ export default function UpiPaymentModal({ isOpen, onClose }: UpiPaymentModalProp
     setShowSecurityCheck(true);
   };
 
-  const handleSecurityVerificationComplete = (success: boolean) => {
+  const handleSecurityVerificationComplete = async (success: boolean) => {
     setShowSecurityCheck(false);
     
-    if (success && formValues) {
+    if (success && formValues && auth.currentUser) {
       setShowProcessing(true);
-      // Add slight delay to make the process feel more secure
-      setTimeout(() => {
-        upiPaymentMutation.mutate(formValues);
-      }, 800);
+      
+      // For demo, assume the UPI ID represents another user in the system
+      try {
+        // This is simulating looking up another user by UPI - in a real app, you'd have a proper lookup
+        const receiverUid = formValues.upiId.replace(/[^a-zA-Z0-9]/g, "");
+        
+        // Generate a verification code if amount is over 2000 and create the real-time notification
+        if (formValues.amount >= 2000) {
+          const verificationCode = await createPaymentVerification(
+            auth.currentUser.uid,
+            receiverUid, // In a real app, this would be the actual receiver's UID
+            formValues.amount,
+            'UPI'
+          );
+          
+          // Update transaction details with verification code
+          setTransactionDetails({
+            ...formValues,
+            verificationCode,
+            status: 'PENDING',
+            createdAt: new Date().toISOString(),
+            verificationRequired: true
+          });
+          
+          // Show verification screen after short delay for processing visibility
+          setTimeout(() => {
+            setShowProcessing(false);
+            setShowVerification(true);
+            
+            toast({
+              title: "Verification Required",
+              description: `For security, the recipient must verify this payment with code: ${verificationCode}`,
+              icon: <Key className="h-4 w-4 text-blue-500" />,
+              duration: 6000,
+            });
+          }, 2000);
+        } else {
+          // For smaller amounts, proceed directly
+          // Add slight delay to make the process feel more secure
+          setTimeout(() => {
+            upiPaymentMutation.mutate(formValues);
+          }, 800);
+        }
+      } catch (error) {
+        console.error("Error creating payment verification:", error);
+        setShowProcessing(false);
+        
+        toast({
+          variant: "destructive",
+          title: "Verification Error",
+          description: "Could not create payment verification. Please try again.",
+          icon: <AlertTriangle className="h-4 w-4 text-red-500" />,
+        });
+      }
     } else if (!success) {
       // If security check failed
       toast({

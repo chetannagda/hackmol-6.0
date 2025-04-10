@@ -7,7 +7,21 @@ import {
   onAuthStateChanged,
   type User 
 } from "firebase/auth";
-import { getDatabase, ref, set, push, get, query, orderByChild, limitToLast } from "firebase/database";
+import { 
+  getDatabase, 
+  ref, 
+  set, 
+  push, 
+  get, 
+  query, 
+  orderByChild, 
+  limitToLast, 
+  onValue, 
+  update,
+  orderByKey,
+  equalTo,
+  remove
+} from "firebase/database";
 
 // Firebase configuration with your credentials
 const firebaseConfig = {
@@ -135,6 +149,237 @@ export const getUserTransactions = async (uid: string, limit: number = 10) => {
     return transactions;
   } catch (error) {
     console.error("Error getting user transactions:", error);
+    throw error;
+  }
+};
+
+// Real-time notification functions
+
+/**
+ * Create a payment verification code and save it to Firebase
+ * @param senderUid Sender Firebase UID
+ * @param receiverUid Receiver Firebase UID
+ * @param amount Payment amount
+ * @param paymentType Payment type (UPI, BANK, INTERNATIONAL)
+ * @returns Verification code
+ */
+export const createPaymentVerification = async (
+  senderUid: string, 
+  receiverUid: string,
+  amount: number,
+  paymentType: 'UPI' | 'BANK' | 'INTERNATIONAL'
+) => {
+  try {
+    console.log("Creating payment verification in Firebase");
+    
+    // Generate a random 6-digit verification code
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    const verificationRef = push(ref(database, 'payment_verifications'));
+    await set(verificationRef, {
+      senderUid,
+      receiverUid,
+      amount,
+      paymentType,
+      verificationCode,
+      status: 'PENDING',
+      createdAt: Date.now(),
+      expiresAt: Date.now() + (15 * 60 * 1000), // 15 minutes expiry
+    });
+    
+    // Also create a notification for the receiver
+    await createNotification(receiverUid, {
+      type: 'PAYMENT_REQUEST',
+      title: 'Payment Verification',
+      message: `You have a pending payment verification of ${amount.toFixed(2)} via ${paymentType}`,
+      verificationCode,
+      amount,
+      senderUid,
+      paymentType,
+      createdAt: Date.now(),
+      isRead: false,
+    });
+    
+    return verificationCode;
+  } catch (error) {
+    console.error("Error creating payment verification:", error);
+    throw error;
+  }
+};
+
+/**
+ * Verify a payment code
+ * @param code Verification code
+ * @param receiverUid Receiver's UID to verify
+ * @returns Whether verification was successful
+ */
+export const verifyPaymentCode = async (code: string, receiverUid: string) => {
+  try {
+    console.log("Verifying payment code in Firebase");
+    
+    // Query verification by code
+    const verificationsRef = query(
+      ref(database, 'payment_verifications'),
+      orderByChild('verificationCode'),
+      equalTo(code)
+    );
+    
+    const snapshot = await get(verificationsRef);
+    
+    if (!snapshot.exists()) {
+      return { success: false, message: 'Invalid verification code' };
+    }
+    
+    let verificationId: string | null = null;
+    let verification: any = null;
+    
+    snapshot.forEach((childSnapshot) => {
+      verificationId = childSnapshot.key;
+      verification = childSnapshot.val();
+    });
+    
+    if (!verification) {
+      return { success: false, message: 'Verification not found' };
+    }
+    
+    if (verification.receiverUid !== receiverUid) {
+      return { success: false, message: 'This code is not valid for your account' };
+    }
+    
+    if (verification.status !== 'PENDING') {
+      return { success: false, message: 'This code has already been used' };
+    }
+    
+    if (verification.expiresAt < Date.now()) {
+      return { success: false, message: 'This code has expired' };
+    }
+    
+    // Update the verification status
+    if (verificationId) {
+      await update(ref(database, `payment_verifications/${verificationId}`), {
+        status: 'VERIFIED',
+        verifiedAt: Date.now()
+      });
+      
+      // Create notification for the sender
+      await createNotification(verification.senderUid, {
+        type: 'PAYMENT_VERIFIED',
+        title: 'Payment Verified',
+        message: `Your payment of ${verification.amount.toFixed(2)} was verified successfully`,
+        amount: verification.amount,
+        paymentType: verification.paymentType,
+        createdAt: Date.now(),
+        isRead: false,
+      });
+    }
+    
+    return { 
+      success: true, 
+      message: 'Verification successful', 
+      data: verification 
+    };
+  } catch (error) {
+    console.error("Error verifying payment code:", error);
+    throw error;
+  }
+};
+
+/**
+ * Create a notification for a user
+ * @param uid User UID
+ * @param notification Notification data
+ * @returns Notification ID
+ */
+export const createNotification = async (uid: string, notification: any) => {
+  try {
+    const notificationRef = push(ref(database, `notifications/${uid}`));
+    await set(notificationRef, notification);
+    return notificationRef.key;
+  } catch (error) {
+    console.error("Error creating notification:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get user notifications
+ * @param uid User UID
+ * @param limit Maximum number of notifications to return
+ * @returns Array of notifications
+ */
+export const getUserNotifications = async (uid: string, limit: number = 20) => {
+  try {
+    const notificationsRef = query(
+      ref(database, `notifications/${uid}`),
+      orderByChild('createdAt'),
+      limitToLast(limit)
+    );
+    
+    const snapshot = await get(notificationsRef);
+    const notifications: any[] = [];
+    
+    if (snapshot.exists()) {
+      snapshot.forEach((childSnapshot) => {
+        notifications.push({
+          id: childSnapshot.key,
+          ...childSnapshot.val()
+        });
+      });
+    }
+    
+    // Sort by createdAt in descending order (newest first)
+    return notifications.sort((a, b) => b.createdAt - a.createdAt);
+  } catch (error) {
+    console.error("Error getting user notifications:", error);
+    throw error;
+  }
+};
+
+/**
+ * Subscribe to user notifications in real-time
+ * @param uid User UID
+ * @param callback Function to call when notifications change
+ * @returns Unsubscribe function
+ */
+export const subscribeToNotifications = (uid: string, callback: (notifications: any[]) => void) => {
+  const notificationsRef = query(
+    ref(database, `notifications/${uid}`),
+    orderByChild('createdAt')
+  );
+  
+  // Set up the real-time listener
+  const unsubscribe = onValue(notificationsRef, (snapshot) => {
+    const notifications: any[] = [];
+    
+    if (snapshot.exists()) {
+      snapshot.forEach((childSnapshot) => {
+        notifications.push({
+          id: childSnapshot.key,
+          ...childSnapshot.val()
+        });
+      });
+    }
+    
+    // Sort by createdAt in descending order (newest first)
+    callback(notifications.sort((a, b) => b.createdAt - a.createdAt));
+  });
+  
+  return unsubscribe;
+};
+
+/**
+ * Mark a notification as read
+ * @param uid User UID
+ * @param notificationId Notification ID
+ */
+export const markNotificationAsRead = async (uid: string, notificationId: string) => {
+  try {
+    await update(ref(database, `notifications/${uid}/${notificationId}`), {
+      isRead: true
+    });
+    return true;
+  } catch (error) {
+    console.error("Error marking notification as read:", error);
     throw error;
   }
 };
