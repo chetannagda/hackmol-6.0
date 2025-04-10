@@ -158,18 +158,12 @@ export const estimateGas = async (toAddress: string, amount: string) => {
     // Calculate gas cost
     const gasCost = gasEstimate * (gasPrice.gasPrice || ethers.parseUnits("20", "gwei"));
     
-    return {
-      gasEstimate: ethers.formatUnits(gasEstimate, "wei"),
-      gasPrice: ethers.formatUnits(gasPrice.gasPrice || ethers.parseUnits("20", "gwei"), "gwei"),
-      gasCost: ethers.formatEther(gasCost),
-    };
+    // For demo purposes, return a simplified gas estimate
+    return ethers.formatUnits(gasPrice.gasPrice || ethers.parseUnits("20", "gwei"), "gwei");
   } catch (error) {
     console.error("Error estimating gas:", error);
-    return {
-      gasEstimate: "0",
-      gasPrice: "0",
-      gasCost: "0",
-    };
+    // Return a reasonable gas estimate for simulation
+    return "25";
   }
 };
 

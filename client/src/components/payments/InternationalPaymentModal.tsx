@@ -74,8 +74,8 @@ export default function InternationalPaymentModal({ isOpen, onClose }: Internati
           // Also get gas estimate if wallet address is valid
           if (watchWalletAddress && watchWalletAddress.startsWith('0x') && watchWalletAddress.length === 42) {
             try {
-              const gas = await estimateGas(watchWalletAddress, result.toAmount.toString());
-              setGasEstimate(gas);
+              const gasEstimateValue = await estimateGas(watchWalletAddress, result.toAmount.toString());
+              setGasEstimate(gasEstimateValue);
             } catch (error) {
               console.error("Error estimating gas:", error);
               setGasEstimate(null);
@@ -253,7 +253,7 @@ export default function InternationalPaymentModal({ isOpen, onClose }: Internati
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-blue-700">Recipient Gets</span>
                     <div className="flex items-center gap-1">
-                      <Cube className="h-3 w-3 text-blue-600" />
+                      <Boxes className="h-3 w-3 text-blue-600" />
                       <span className="text-sm font-medium text-blue-800">
                         {conversionResult.toAmount.toFixed(6)} ETH
                       </span>
