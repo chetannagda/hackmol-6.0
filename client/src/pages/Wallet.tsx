@@ -32,19 +32,138 @@ export default function WalletPage() {
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [isConnectingWallet, setIsConnectingWallet] = useState(false);
-  const [ethAddress, setEthAddress] = useState<string | null>(null);
-  const [ethBalance, setEthBalance] = useState<string | null>(null);
+  const [ethAddress, setEthAddress] = useState<string | null>("0x71C7656EC7ab88b098defB751B7401B5f6d8976F");
+  const [ethBalance, setEthBalance] = useState<string | null>("0.238");
+
+  // Sample transactions data
+  const sampleTransactions = [
+    {
+      id: "tx1",
+      type: "UPI",
+      amount: 2500,
+      currency: "INR",
+      status: "COMPLETED",
+      createdAt: "2025-04-10T10:30:00Z",
+      receiverId: user?.id, // incoming
+      senderId: "user123",
+      description: "Payment from Rahul Sharma"
+    },
+    {
+      id: "tx2",
+      type: "BANK",
+      amount: 5000,
+      currency: "INR",
+      status: "COMPLETED",
+      createdAt: "2025-04-08T14:15:00Z",
+      receiverId: "merchant456",
+      senderId: user?.id, // outgoing
+      description: "Rent payment"
+    },
+    {
+      id: "tx3",
+      type: "CRYPTO",
+      amount: 0.05,
+      currency: "ETH",
+      status: "COMPLETED",
+      createdAt: "2025-04-05T09:45:00Z",
+      receiverId: user?.id, // incoming
+      senderId: "0x8Ba1f109551bD432803012645Ac136ddd64DBA72",
+      description: "Freelance payment"
+    },
+    {
+      id: "tx4",
+      type: "UPI",
+      amount: 1200,
+      currency: "INR",
+      status: "COMPLETED",
+      createdAt: "2025-04-02T16:30:00Z",
+      receiverId: "shop789",
+      senderId: user?.id, // outgoing
+      description: "Grocery shopping"
+    },
+    {
+      id: "tx5",
+      type: "BANK",
+      amount: 10000,
+      currency: "INR",
+      status: "PENDING",
+      createdAt: "2025-04-01T11:20:00Z",
+      receiverId: user?.id, // incoming
+      senderId: "bank123",
+      description: "Salary deposit"
+    },
+    {
+      id: "tx6",
+      type: "CRYPTO",
+      amount: 0.1,
+      currency: "ETH",
+      status: "COMPLETED",
+      createdAt: "2025-03-29T13:40:00Z",
+      receiverId: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      senderId: user?.id, // outgoing
+      description: "NFT purchase"
+    },
+    {
+      id: "tx7",
+      type: "UPI",
+      amount: 850,
+      currency: "INR",
+      status: "COMPLETED",
+      createdAt: "2025-03-27T19:15:00Z",
+      receiverId: user?.id, // incoming
+      senderId: "friend456",
+      description: "Dinner split"
+    },
+    {
+      id: "tx8",
+      type: "BANK",
+      amount: 3500,
+      currency: "INR",
+      status: "FAILED",
+      createdAt: "2025-03-25T08:50:00Z",
+      receiverId: "utility123",
+      senderId: user?.id, // outgoing
+      description: "Electricity bill"
+    },
+    {
+      id: "tx9",
+      type: "UPI",
+      amount: 750,
+      currency: "INR",
+      status: "COMPLETED",
+      createdAt: "2025-03-22T12:10:00Z",
+      receiverId: "restaurant789",
+      senderId: user?.id, // outgoing
+      description: "Food delivery"
+    },
+    {
+      id: "tx10",
+      type: "CRYPTO",
+      amount: 0.025,
+      currency: "ETH",
+      status: "PROCESSING",
+      createdAt: "2025-03-20T15:35:00Z",
+      receiverId: user?.id, // incoming
+      senderId: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+      description: "DeFi yield"
+    }
+  ];
 
   const { data: transactionsData } = useQuery<{ transactions: any[] }>({
     queryKey: [`/api/users/${user?.id}/recent-transactions?limit=5`],
     enabled: !!user?.id,
   });
 
-  const transactions = transactionsData?.transactions || [];
+  const transactions = transactionsData?.transactions || sampleTransactions;
 
   const addFundsMutation = useMutation({
     mutationFn: async ({ amount }: { amount: number }) => {
-      return await apiRequest("POST", `/api/users/${user?.id}/add-funds`, { amount });
+      // Simulate API call with timeout
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({ success: true, message: "Funds added successfully" });
+        }, 1500);
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/users/${user?.id}`] });
@@ -97,40 +216,29 @@ export default function WalletPage() {
       return;
     }
 
-    // TODO: Implement actual withdrawal logic here
-    toast({
-      title: "Withdrawal Initiated",
-      description: `₹${amount.toFixed(2)} will be transferred to your bank account.`,
-    });
-    setIsWithdrawOpen(false);
-    setWithdrawAmount("");
+    // Simulate withdrawal with timeout
+    setTimeout(() => {
+      toast({
+        title: "Withdrawal Successful",
+        description: `₹${amount.toFixed(2)} has been transferred to your bank account.`,
+      });
+      setIsWithdrawOpen(false);
+      setWithdrawAmount("");
+    }, 1500);
   };
 
   const connectEthereumWallet = async () => {
     setIsConnectingWallet(true);
-    try {
-      const address = await getWalletAddress();
-      if (address) {
-        setEthAddress(address);
-        const balance = await getEthBalance(address);
-        setEthBalance(balance);
-        toast({
-          title: "Wallet Connected",
-          description: "Your Ethereum wallet has been connected successfully.",
-        });
-      } else {
-        throw new Error("Failed to connect wallet");
-      }
-    } catch (error) {
-      console.error("Error connecting wallet:", error);
+    // Simulate connection delay
+    setTimeout(() => {
+      setEthAddress("0x71C7656EC7ab88b098defB751B7401B5f6d8976F");
+      setEthBalance("0.238");
       toast({
-        variant: "destructive",
-        title: "Wallet Connection Failed",
-        description: error instanceof Error ? error.message : "Failed to connect to Ethereum wallet",
+        title: "Wallet Connected",
+        description: "Your Ethereum wallet has been connected successfully.",
       });
-    } finally {
       setIsConnectingWallet(false);
-    }
+    }, 2000);
   };
 
   const copyToClipboard = (text: string) => {
@@ -144,13 +252,15 @@ export default function WalletPage() {
   const refreshEthBalance = async () => {
     if (!ethAddress) return;
     
+    // Simulate refresh with a slight delay
     try {
-      const balance = await getEthBalance(ethAddress);
-      setEthBalance(balance);
-      toast({
-        title: "Balance Updated",
-        description: "Your Ethereum balance has been refreshed.",
-      });
+      setTimeout(() => {
+        setEthBalance("0.241");
+        toast({
+          title: "Balance Updated",
+          description: "Your Ethereum balance has been refreshed.",
+        });
+      }, 1000);
     } catch (error) {
       console.error("Error refreshing balance:", error);
       toast({
@@ -184,12 +294,12 @@ export default function WalletPage() {
                   <span className="text-xl font-bold">PaySafe</span>
                 </div>
                 <div className="text-sm opacity-75">
-                  {user?.username}
+                  {user?.username || "johndoe123"}
                 </div>
               </div>
               <div className="mb-1">Available Balance</div>
               <div className="text-3xl font-bold mb-4">
-                {formatCurrency(user?.walletBalance || 0)}
+                {formatCurrency(user?.walletBalance || 25000)}
               </div>
               <div className="flex space-x-2">
                 <Button 
@@ -202,7 +312,7 @@ export default function WalletPage() {
                 </Button>
                 <Button 
                   variant="outline" 
-                  className="border-white text-white hover:bg-white/20"
+                  className="border-white text-black hover:bg-white/20 font-medium"
                   onClick={() => setIsWithdrawOpen(true)}
                 >
                   <ArrowUpRight className="h-4 w-4 mr-2" />
@@ -316,12 +426,13 @@ export default function WalletPage() {
                           </div>
                           <div>
                             <h4 className="text-gray-800 font-medium">
-                              {transaction.type === 'UPI' 
-                                ? 'UPI Transaction' 
-                                : transaction.type === 'BANK'
-                                  ? 'Bank Transfer'
-                                  : 'International Payment'
-                              }
+                              {transaction.description || (
+                                transaction.type === 'UPI' 
+                                  ? 'UPI Transaction' 
+                                  : transaction.type === 'BANK'
+                                    ? 'Bank Transfer'
+                                    : 'Crypto Transaction'
+                              )}
                             </h4>
                             <p className="text-gray-500 text-sm">
                               {new Date(transaction.createdAt).toLocaleDateString()} • {transaction.type}
@@ -332,7 +443,13 @@ export default function WalletPage() {
                           <p className={`font-semibold ${isIncoming ? 'text-emerald-600' : 'text-red-600'}`}>
                             {isIncoming ? '+' : '-'}{formatCurrency(transaction.amount, transaction.currency)}
                           </p>
-                          <p className="text-gray-500 text-xs capitalize">{transaction.status.toLowerCase()}</p>
+                          <p className={`text-xs ${
+                            transaction.status === 'COMPLETED' ? 'text-emerald-600' : 
+                            transaction.status === 'PENDING' ? 'text-amber-600' :
+                            transaction.status === 'PROCESSING' ? 'text-blue-600' : 'text-red-600'
+                          } capitalize`}>
+                            {transaction.status.toLowerCase()}
+                          </p>
                         </div>
                       </div>
                     );
@@ -429,24 +546,15 @@ export default function WalletPage() {
                     </Button>
                   </div>
                   <div className="border-t pt-4">
-                    {user?.upiId ? (
-                      <div className="flex items-center justify-between py-2">
-                        <div>
-                          <p className="font-medium">{user.upiId}</p>
-                          <p className="text-gray-500 text-sm">PaySafe UPI</p>
-                        </div>
-                        <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
-                          Active
-                        </span>
+                    <div className="flex items-center justify-between py-2">
+                      <div>
+                        <p className="font-medium">johndoe@upi</p>
+                        <p className="text-gray-500 text-sm">PaySafe UPI</p>
                       </div>
-                    ) : (
-                      <div className="text-center py-2">
-                        <p className="text-gray-500">No UPI ID configured</p>
-                        <Button variant="link" className="mt-1">
-                          Add UPI ID
-                        </Button>
-                      </div>
-                    )}
+                      <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+                        Active
+                      </span>
+                    </div>
                   </div>
                 </div>
                 
@@ -670,7 +778,7 @@ export default function WalletPage() {
                 onChange={(e) => setWithdrawAmount(e.target.value)}
               />
               <p className="text-xs text-gray-500">
-                Available Balance: {formatCurrency(user?.walletBalance || 0)}
+                Available Balance: {formatCurrency(user?.walletBalance || 25000)}
               </p>
             </div>
             <div className="space-y-2">

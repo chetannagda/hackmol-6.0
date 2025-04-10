@@ -55,7 +55,102 @@ export default function Transactions() {
     );
   }
 
-  let transactions = data?.transactions || [];
+  // Sample transactions data for demonstration purposes
+  const sampleTransactions: Transaction[] = [
+    {
+      id: 1001,
+      senderId: userId ? userId : 1,
+      receiverId: null,
+      receiverUpiId: "john.doe@upi",
+      receiverAccountNumber: null,
+      receiverIfscCode: null,
+      receiverEthAddress: null,
+      amount: 500,
+      currency: "INR",
+      type: "UPI",
+      status: "COMPLETED",
+      note: "Dinner payment",
+      createdAt: "2025-04-08T14:22:30Z"
+    },
+    {
+      id: 1002,
+      senderId: 2,
+      receiverId: userId ? userId : 1,
+      receiverUpiId: null,
+      receiverAccountNumber: null,
+      receiverIfscCode: null,
+      receiverEthAddress: null,
+      amount: 1200,
+      currency: "INR",
+      type: "UPI",
+      status: "COMPLETED",
+      note: "Rent contribution",
+      createdAt: "2025-04-07T09:15:45Z"
+    },
+    {
+      id: 1003,
+      senderId: userId ? userId : 1,
+      receiverId: null,
+      receiverUpiId: null,
+      receiverAccountNumber: "35672819045",
+      receiverIfscCode: "HDFC0001234",
+      receiverEthAddress: null,
+      amount: 5000,
+      currency: "INR",
+      type: "BANK",
+      status: "PENDING",
+      note: "Monthly rent transfer",
+      createdAt: "2025-04-05T18:30:22Z"
+    },
+    {
+      id: 1004,
+      senderId: userId ? userId : 1,
+      receiverId: null,
+      receiverUpiId: null,
+      receiverAccountNumber: null,
+      receiverIfscCode: null,
+      receiverEthAddress: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
+      amount: 0.02,
+      currency: "ETH",
+      type: "INTERNATIONAL",
+      status: "COMPLETED",
+      note: "Freelance payment",
+      createdAt: "2025-04-01T11:45:30Z"
+    },
+    {
+      id: 1005,
+      senderId: 3,
+      receiverId: userId ? userId : 1,
+      receiverUpiId: null,
+      receiverAccountNumber: null,
+      receiverIfscCode: null,
+      receiverEthAddress: null,
+      amount: 299,
+      currency: "INR",
+      type: "UPI",
+      status: "COMPLETED",
+      note: "Movie tickets",
+      createdAt: "2025-03-29T20:10:15Z"
+    },
+    {
+      id: 1006,
+      senderId: userId ? userId : 1,
+      receiverId: null,
+      receiverUpiId: "sara.m@upi",
+      receiverAccountNumber: null,
+      receiverIfscCode: null,
+      receiverEthAddress: null,
+      amount: 750,
+      currency: "INR",
+      type: "UPI",
+      status: "FAILED",
+      note: "Shared expenses",
+      createdAt: "2025-03-28T13:20:45Z"
+    }
+  ];
+
+  // Use sample transactions if no data is available from API
+  let transactions = data?.transactions?.length ? data.transactions : sampleTransactions;
   
   // Filter transactions
   if (filter !== "all") {

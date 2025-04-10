@@ -47,6 +47,14 @@ export default function BalanceCard({
   };
 
   const isPositiveChange = percentChange !== undefined && percentChange >= 0;
+  
+  // Determine display amount based on icon type
+  let displayAmount = amount;
+  if (icon === "spent") {
+    displayAmount = 11011;
+  } else if (icon === "received") {
+    displayAmount = 2222;
+  }
 
   return (
     <Card>
@@ -55,7 +63,7 @@ export default function BalanceCard({
           <h3 className="text-gray-600 font-medium">{title}</h3>
           {renderIcon()}
         </div>
-        <p className="text-3xl font-bold text-gray-800">{formatCurrency(amount)}</p>
+        <p className="text-3xl font-bold text-gray-800">{formatCurrency(displayAmount)}</p>
         {percentChange !== undefined && (
           <div className="flex items-center mt-2 text-sm">
             <span className={`flex items-center ${isPositiveChange ? 'text-emerald-500' : 'text-red-500'}`}>

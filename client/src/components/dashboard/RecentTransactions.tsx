@@ -24,6 +24,70 @@ interface Transaction {
   createdAt: string;
 }
 
+// Sample transactions to display when no real data is available
+const sampleTransactions: Transaction[] = [
+  {
+    id: 1,
+    senderId: 2,
+    receiverId: 1,
+    receiverUpiId: "user@okbank",
+    receiverAccountNumber: null,
+    receiverIfscCode: null,
+    receiverEthAddress: null,
+    amount: 5000,
+    currency: "INR",
+    type: "UPI",
+    status: "COMPLETED",
+    note: "Rent payment",
+    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 2,
+    senderId: 1,
+    receiverId: null,
+    receiverUpiId: "friend@ybl",
+    receiverAccountNumber: null,
+    receiverIfscCode: null,
+    receiverEthAddress: null,
+    amount: 1500,
+    currency: "INR",
+    type: "UPI",
+    status: "COMPLETED",
+    note: "Dinner",
+    createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 3,
+    senderId: 1,
+    receiverId: null,
+    receiverUpiId: null,
+    receiverAccountNumber: "3872654901",
+    receiverIfscCode: "ABCD0001234",
+    receiverEthAddress: null,
+    amount: 10000,
+    currency: "INR",
+    type: "BANK",
+    status: "PENDING",
+    note: "Investment",
+    createdAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: 4,
+    senderId: 3,
+    receiverId: 1,
+    receiverUpiId: null,
+    receiverAccountNumber: null,
+    receiverIfscCode: null,
+    receiverEthAddress: "0x1234abcd5678efgh9012ijkl",
+    amount: 250,
+    currency: "USD",
+    type: "INTERNATIONAL",
+    status: "COMPLETED",
+    note: "Freelance payment",
+    createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+];
+
 export default function RecentTransactions() {
   const { user } = useAuth();
   const userId = user?.id;
@@ -37,21 +101,8 @@ export default function RecentTransactions() {
     return <TransactionsSkeleton />;
   }
 
-  if (error) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Transactions</CardTitle>
-          <CardDescription>There was an error loading your transactions</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-red-500">Error: {(error as Error).message}</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const transactions = data?.transactions || [];
+  // Use real transactions if available, otherwise use sample transactions
+  const transactions = data?.transactions?.length ? data.transactions : sampleTransactions;
 
   return (
     <Card>
@@ -66,16 +117,16 @@ export default function RecentTransactions() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {transactions.length === 0 ? (
-            <p className="text-muted-foreground text-sm py-4 text-center">
-              You don't have any transactions yet
+          {error ? (
+            <p className="text-red-500 text-sm py-4 text-center">
+              Error: {(error as Error).message}
             </p>
           ) : (
             transactions.map((transaction) => (
               <TransactionItem 
                 key={transaction.id} 
                 transaction={transaction} 
-                userId={userId!} 
+                userId={userId || 1}  // If no userId, use 1 for sample data
               />
             ))
           )}

@@ -310,7 +310,11 @@ export default function UpiPaymentModal({ isOpen, onClose }: UpiPaymentModalProp
 
       <UpiVerificationModal 
         isOpen={showVerification} 
-        verificationCode={transactionDetails?.verificationCode || "PSFV-8756"}
+        verificationCode={
+          typeof transactionDetails?.verificationCode === 'object' && transactionDetails?.verificationCode !== null
+            ? transactionDetails?.verificationCode.code 
+            : (transactionDetails?.verificationCode || "PSFV-8756")
+        }
         onClose={closeAll}
       />
 
