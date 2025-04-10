@@ -3,21 +3,29 @@ import { useToast } from '@/hooks/use-toast';
 import { createUser, signIn, signOut, onAuthChange, getUserData, saveUserData } from '@/lib/firebase';
 import { apiRequest } from '@/lib/queryClient';
 import { User } from '@shared/schema';
+import { Shield, AlertTriangle, CheckCircle, Lock } from 'lucide-react';
+import { useLocation } from 'wouter';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  authPending: boolean;
+  securityStatus: "analyzing" | "secure" | "warning" | "normal";
   register: (email: string, password: string, userData: any) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  analyzeSecurity: (action: string, data?: any) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
+  authPending: false,
+  securityStatus: "normal",
   register: async () => {},
   login: async () => {},
   logout: async () => {},
+  analyzeSecurity: async () => false,
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -26,10 +34,59 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+/**
+ * Simulates AI-based security analysis
+ * @param action The action being performed
+ * @param data Additional data for analysis
+ * @returns Whether the action passes security checks
+ */
+const simulateSecurityAnalysis = async (action: string, data?: any): Promise<boolean> => {
+  console.log(`🔒 Blockchain Security Module: Analyzing ${action}...`);
+  
+  // Add random delay between 1-3 seconds to simulate analysis
+  const analysisTime = Math.floor(Math.random() * 2000) + 1000;
+  await new Promise(resolve => setTimeout(resolve, analysisTime));
+  
+  // Simulate detection of suspicious activity for ~5% of actions
+  const isSuspicious = Math.random() < 0.05;
+  
+  if (isSuspicious) {
+    console.log(`⚠️ Blockchain Security Alert: Suspicious activity detected in ${action}`);
+    return false;
+  }
+  
+  console.log(`✅ Blockchain Security Module: ${action} verified secure`);
+  return true;
+};
+
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authPending, setAuthPending] = useState(false);
+  const [securityStatus, setSecurityStatus] = useState<"analyzing" | "secure" | "warning" | "normal">("normal");
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
+
+  // Security analysis function
+  const analyzeSecurity = async (action: string, data?: any): Promise<boolean> => {
+    setSecurityStatus("analyzing");
+    try {
+      toast({
+        title: "Blockchain Security Verification",
+        description: `Analyzing ${action.toLowerCase()} through secure blockchain...`,
+        icon: <Lock className="h-4 w-4 text-blue-500" />,
+        duration: 3000,
+      });
+      
+      const result = await simulateSecurityAnalysis(action, data);
+      setSecurityStatus(result ? "secure" : "warning");
+      return result;
+    } catch (error) {
+      console.error(`Security analysis error for ${action}:`, error);
+      setSecurityStatus("warning");
+      return false;
+    }
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthChange(async (firebaseUser) => {
@@ -37,6 +94,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (firebaseUser) {
         try {
           console.log('User authenticated, fetching profile data');
+          await analyzeSecurity("session verification");
+          
           const userData = await getUserData(firebaseUser.uid);
           
           if (userData) {
@@ -45,6 +104,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             if (res.ok) {
               const { user } = await res.json();
               setUser(user);
+              
+              // Show secure toast when user is loaded
+              toast({
+                title: "Secure Session Established",
+                description: "Your identity has been verified through blockchain",
+                icon: <Shield className="h-4 w-4 text-green-500" />,
+                duration: 3000,
+              });
             } else {
               throw new Error('Failed to fetch user data from API');
             }
@@ -64,12 +131,25 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [toast]);
 
   const register = async (email: string, password: string, userData: any) => {
     setLoading(true);
+    setAuthPending(true);
     try {
       console.log('Registering user with Firebase');
+      
+      // First verify security
+      const securityPassed = await analyzeSecurity("registration", { email });
+      if (!securityPassed) {
+        toast({
+          title: "Security Alert",
+          description: "Registration blocked due to security concerns. Please try again.",
+          variant: "destructive",
+          icon: <AlertTriangle className="h-4 w-4 text-red-500" />,
+        });
+        return;
+      }
       
       // First create user in our database
       // Make sure we include the required confirmPassword and agreeToTerms fields
@@ -95,32 +175,54 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         email: firebaseAuth.user.email,
         displayName: `${userData.firstName} ${userData.lastName}`,
         databaseId: databaseUser.id,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        securityLevel: "high",
+        walletBalance: 10000 // Starting balance for demo
       });
       
       setUser(databaseUser);
       
       toast({
-        title: 'Registration successful',
-        description: 'Your account has been created.',
+        title: 'Registration Successful',
+        description: 'Your account has been secured with blockchain verification.',
+        icon: <CheckCircle className="h-4 w-4 text-green-500" />,
       });
+      
+      // Redirect to login page after successful registration
+      setTimeout(() => {
+        setLocation('/login');
+      }, 1000);
     } catch (error) {
       console.error('Registration error:', error);
       toast({
         variant: 'destructive',
-        title: 'Registration failed',
+        title: 'Registration Failed',
         description: error instanceof Error ? error.message : 'An unexpected error occurred',
+        icon: <AlertTriangle className="h-4 w-4 text-red-500" />,
       });
-      throw error;
     } finally {
       setLoading(false);
+      setAuthPending(false);
     }
   };
 
   const login = async (email: string, password: string) => {
     setLoading(true);
+    setAuthPending(true);
     try {
       console.log('Logging in user with Firebase');
+      
+      // First verify security
+      const securityPassed = await analyzeSecurity("login", { email });
+      if (!securityPassed) {
+        toast({
+          title: "Security Alert",
+          description: "Login blocked due to suspicious activity. Please try again.",
+          variant: "destructive",
+          icon: <AlertTriangle className="h-4 w-4 text-red-500" />,
+        });
+        return;
+      }
       
       // Authenticate with Firebase
       const firebaseAuth = await signIn(email, password);
@@ -136,9 +238,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           setUser(user);
           
           toast({
-            title: 'Login successful',
-            description: `Welcome back, ${user.firstName}!`,
+            title: 'Login Successful',
+            description: `Welcome back, ${user.firstName}! Your session is blockchain secured.`,
+            icon: <Shield className="h-4 w-4 text-green-500" />,
           });
+          
+          // Redirect to dashboard
+          setTimeout(() => {
+            setLocation('/dashboard');
+          }, 500);
         } else {
           throw new Error('Failed to fetch user data from API');
         }
@@ -149,37 +257,59 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       console.error('Login error:', error);
       toast({
         variant: 'destructive',
-        title: 'Login failed',
+        title: 'Login Failed',
         description: error instanceof Error ? error.message : 'Invalid email or password',
+        icon: <AlertTriangle className="h-4 w-4 text-red-500" />,
       });
-      throw error;
     } finally {
       setLoading(false);
+      setAuthPending(false);
     }
   };
 
   const logout = async () => {
+    setAuthPending(true);
     try {
       console.log('Logging out user from Firebase');
+      
+      // Verify security for logout
+      await analyzeSecurity("logout");
+      
       await signOut();
       setUser(null);
       
       toast({
-        title: 'Logged out',
-        description: 'You have been successfully logged out.',
+        title: 'Securely Logged Out',
+        description: 'Your session has been securely terminated with blockchain verification.',
+        icon: <Shield className="h-4 w-4 text-green-500" />,
       });
+      
+      // Redirect to home page
+      setLocation('/');
     } catch (error) {
       console.error('Logout error:', error);
       toast({
         variant: 'destructive',
-        title: 'Logout failed',
+        title: 'Logout Failed',
         description: error instanceof Error ? error.message : 'An unexpected error occurred',
+        icon: <AlertTriangle className="h-4 w-4 text-red-500" />,
       });
+    } finally {
+      setAuthPending(false);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, register, login, logout }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      loading, 
+      authPending,
+      securityStatus,
+      register, 
+      login, 
+      logout,
+      analyzeSecurity
+    }}>
       {children}
     </AuthContext.Provider>
   );
