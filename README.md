@@ -74,5 +74,4 @@ DFPG empowers users with a robust blockchain-based payment solution that’s:
 | Crypto APIs                     | Chain-link (for real-time conversions)     |
 | Decentralized Storage (Planned) | IPFS                                       |
 | Hosting                         | Netlify / GitHub Pages                     |
-|---------------------------------|--------------------------------------------|
 
