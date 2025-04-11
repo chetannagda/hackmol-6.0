@@ -172,6 +172,15 @@ export default function SecurityVerification({
         ))}
       </div>
       
+      <div className="flex justify-between items-center mb-2">
+        <div className="text-sm text-gray-600">Transfer Amount</div>
+        <div className="font-semibold text-gray-900">₹{amount?.toFixed(2)}</div>
+      </div>
+      <div className="flex justify-between items-center">
+        <div className="text-sm text-gray-600">Recipient Gets</div>
+        <div className="font-semibold text-green-600">₹{amount?.toFixed(2)}</div>
+      </div>
+
       {showBlockchainMessage && (
         <div className="mt-4 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 p-3 border border-blue-100">
           <div className="flex items-center gap-2">
@@ -180,7 +189,7 @@ export default function SecurityVerification({
           </div>
           <p className="mt-1 text-xs text-blue-600">
             This transaction is being verified and secured through Ethereum blockchain technology, 
-            ensuring maximum protection against unauthorized access and fraud.
+            ensuring maximum protection against unauthorized access and fraud with no additional fees.
           </p>
         </div>
       )}

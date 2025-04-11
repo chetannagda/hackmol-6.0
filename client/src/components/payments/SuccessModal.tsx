@@ -18,10 +18,8 @@ export default function SuccessModal({ isOpen, transaction, onClose }: SuccessMo
   // Generate fake blockchain transaction hash
   const blockchainHash = "0x" + Math.random().toString(16).substring(2, 10) + Math.random().toString(16).substring(2, 30);
   
-  // Calculate a random transaction fee (slightly less than original amount)
-  const feePercentage = Math.random() * 0.015 + 0.005; // 0.5% to 2%
-  const transactionFee = transaction.amount * feePercentage;
-  const finalAmount = transaction.amount - transactionFee;
+  // Remove fee calculation - recipient gets full amount
+  const finalAmount = transaction.amount;
   
   // Show processing time in milliseconds (600-1500ms range)
   const processingTime = Math.floor(Math.random() * 900) + 600;
@@ -65,13 +63,13 @@ export default function SuccessModal({ isOpen, transaction, onClose }: SuccessMo
               <p className="text-sm font-medium">{transaction.type}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500">Network Fee</p>
-              <p className="text-sm font-medium text-amber-600">
-                {formatCurrency(transactionFee, transaction.currency)}
+              <p className="text-xs text-gray-500">Blockchain Verification</p>
+              <p className="text-sm font-medium text-blue-600">
+                Completed
               </p>
             </div>
             <div>
-              <p className="text-xs text-gray-500">Final Amount Received</p>
+              <p className="text-xs text-gray-500">Amount Received</p>
               <p className="text-sm font-medium text-emerald-600">
                 {formatCurrency(finalAmount, transaction.currency)}
               </p>

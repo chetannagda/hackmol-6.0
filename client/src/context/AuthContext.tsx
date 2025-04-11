@@ -7,8 +7,9 @@ import { Shield, AlertTriangle, CheckCircle, Lock } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { auth, database } from '@/lib/firebase'; // Correct Firebase configuration import
 
-interface AuthContextType {
+type AuthContextType = {
   user: User | null;
+  firebaseUser: any | null;
   loading: boolean;
   authPending: boolean;
   securityStatus: "analyzing" | "secure" | "warning" | "normal";
@@ -16,10 +17,11 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   analyzeSecurity: (action: string, data?: any) => Promise<boolean>;
-}
+};
 
-const AuthContext = createContext<AuthContextType>({
+export const AuthContext = createContext<AuthContextType>({
   user: null,
+  firebaseUser: null,
   loading: true,
   authPending: false,
   securityStatus: "normal",
@@ -62,6 +64,7 @@ const simulateSecurityAnalysis = async (action: string, data?: any): Promise<boo
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
+  const [firebaseUser, setFirebaseUser] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [authPending, setAuthPending] = useState(false);
   const [securityStatus, setSecurityStatus] = useState<"analyzing" | "secure" | "warning" | "normal">("normal");
@@ -90,14 +93,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthChange(async (firebaseUser) => {
+    const unsubscribe = onAuthChange(async (fbUser) => {
       setLoading(true);
-      if (firebaseUser) {
+      if (fbUser) {
+        setFirebaseUser(fbUser);
         try {
           console.log('User authenticated, fetching profile data');
           await analyzeSecurity("session verification");
           
-          const userData = await getUserData(firebaseUser.uid);
+          const userData = await getUserData(fbUser.uid);
           
           if (userData) {
             // Get the user with their database record ID
@@ -123,10 +127,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         } catch (error) {
           console.error('Error fetching user data:', error);
           setUser(null);
+          setFirebaseUser(null);
         }
       } else {
         console.log('No authenticated user');
         setUser(null);
+        setFirebaseUser(null);
       }
       setLoading(false);
     });
@@ -283,6 +289,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       
       await signOut();
       setUser(null);
+      setFirebaseUser(null);
       
       toast({
         title: 'Securely Logged Out',
@@ -308,6 +315,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   return (
     <AuthContext.Provider value={{ 
       user, 
+      firebaseUser,
       loading, 
       authPending,
       securityStatus,

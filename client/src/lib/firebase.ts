@@ -296,9 +296,10 @@ export const verifyPaymentCode = async (code: string, receiverUid: string) => {
  */
 export const createNotification = async (uid: string, notification: any) => {
   try {
-    const notificationRef = push(ref(database, `notifications/${uid}`));
-    await set(notificationRef, notification);
-    return notificationRef.key;
+    const notificationsRef = ref(database, `notifications/${uid}`);
+    const newNotificationRef = push(notificationsRef);
+    await set(newNotificationRef, notification);
+    return newNotificationRef.key;
   } catch (error) {
     console.error("Error creating notification:", error);
     throw error;
@@ -384,6 +385,34 @@ export const markNotificationAsRead = async (uid: string, notificationId: string
     return true;
   } catch (error) {
     console.error("Error marking notification as read:", error);
+    throw error;
+  }
+};
+
+/**
+ * Update user wallet balance in Firebase
+ * @param uid User UID
+ * @param walletBalance New wallet balance amount
+ * @returns Promise<boolean>
+ */
+export const updateUserWalletBalance = async (uid: string, walletBalance: number): Promise<boolean> => {
+  try {
+    console.log(`Updating wallet balance in Firebase for UID: ${uid} to ${walletBalance}`);
+    await update(ref(database, `users/${uid}`), { walletBalance });
+    
+    // Create a notification for the wallet balance update
+    await createNotification(uid, {
+      type: 'WALLET_UPDATE',
+      title: 'Wallet Balance Updated',
+      message: `Your wallet balance has been updated to ₹${walletBalance.toFixed(2)}`,
+      amount: walletBalance,
+      createdAt: Date.now(),
+      isRead: false,
+    });
+    
+    return true;
+  } catch (error) {
+    console.error("Error updating wallet balance in Firebase:", error);
     throw error;
   }
 };

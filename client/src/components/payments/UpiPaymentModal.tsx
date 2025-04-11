@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Info, Shield, AlertTriangle, Key } from "lucide-react";
+import { Info, Shield, AlertTriangle, Key, Smartphone, ChevronRight, CreditCard, Lock, Clock } from "lucide-react";
 import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -17,6 +17,7 @@ import UpiVerificationModal from "./UpiVerificationModal";
 import SuccessModal from "./SuccessModal";
 import SecurityVerification from "./SecurityVerification";
 import { createPaymentVerification, getUserData, auth } from "@/lib/firebase";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface UpiPaymentModalProps {
   isOpen: boolean;
@@ -37,6 +38,8 @@ export default function UpiPaymentModal({ isOpen, onClose }: UpiPaymentModalProp
   const [showSuccess, setShowSuccess] = useState(false);
   const [transactionDetails, setTransactionDetails] = useState<any>(null);
   const [formValues, setFormValues] = useState<z.infer<typeof formSchema> | null>(null);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [showPin, setShowPin] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -167,122 +170,284 @@ export default function UpiPaymentModal({ isOpen, onClose }: UpiPaymentModalProp
     setShowSecurityCheck(false);
     setShowSuccess(false);
     setFormValues(null);
+    setCurrentStep(1);
+    setShowPin(false);
     form.reset();
     onClose();
+  };
+
+  const handleContinue = () => {
+    const fieldsToValidate = currentStep === 1 
+      ? ['upiId', 'amount', 'note'] 
+      : ['pin'];
+    
+    form.trigger(fieldsToValidate as any).then(isValid => {
+      if (isValid) {
+        if (currentStep === 1) {
+          setCurrentStep(2);
+          setShowPin(true);
+        } else {
+          form.handleSubmit(onSubmit)();
+        }
+      }
+    });
   };
   
   // Determine if this is a high-amount transaction for security checking
   const isHighAmount = formValues?.amount ? formValues.amount >= 5000 : false;
 
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: {
+        when: "beforeChildren",
+        staggerChildren: 0.1,
+      }
+    },
+    exit: { opacity: 0 }
+  };
+  
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { y: 0, opacity: 1 },
+    exit: { y: -20, opacity: 0 }
+  };
+
   return (
     <>
       <Dialog open={isOpen && !showProcessing && !showVerification && !showSecurityCheck && !showSuccess} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-primary" />
-              UPI Payment
-            </DialogTitle>
-            <DialogDescription>
-              Send money directly using UPI ID with blockchain security
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="sm:max-w-md p-0 overflow-hidden border-0 shadow-2xl bg-white rounded-xl">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-indigo-50 z-0"></div>
           
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="upiId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>UPI ID</FormLabel>
-                    <FormControl>
-                      <Input placeholder="example@upi" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="amount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Amount (₹)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        placeholder="0.00" 
-                        {...field} 
-                        onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="note"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Note (Optional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Add a note" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="pin"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>UPI PIN</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="Enter UPI PIN" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <div className="flex items-center justify-between text-sm">
-                <div className="text-primary-foreground py-1 px-2 bg-gradient-to-r from-primary to-primary/80 rounded-md text-xs font-medium">
-                  Blockchain Secured
+          {/* Decorative elements */}
+          <div className="absolute -top-24 -right-24 w-48 h-48 rounded-full bg-gradient-to-br from-blue-500/10 to-indigo-500/5 z-0"></div>
+          <div className="absolute -bottom-16 -left-16 w-32 h-32 rounded-full bg-gradient-to-tr from-indigo-500/10 to-purple-500/5 z-0"></div>
+          
+          <div className="relative z-10 p-6">
+            <DialogHeader className="mb-6">
+              <div className="flex items-center mb-1">
+                <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-600/20 to-indigo-600/20 flex items-center justify-center mr-3">
+                  <Smartphone className="h-5 w-5 text-blue-600" />
                 </div>
-                <div className="text-xs text-muted-foreground">
-                  Transaction fee: ₹0
+                <div>
+                  <DialogTitle className="text-xl font-bold bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent">
+                    UPI Payment
+                  </DialogTitle>
+                  <DialogDescription className="text-gray-600">
+                    Send money directly using UPI ID with blockchain security
+                  </DialogDescription>
                 </div>
               </div>
-              
-              <div className="text-sm text-gray-600 flex items-start space-x-2">
-                <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                <p>For amounts over ₹2,000, our AI security system will verify the transaction.</p>
+            </DialogHeader>
+            
+            {/* Steps indicator */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className={`flex items-center justify-center h-8 w-8 rounded-full ${currentStep >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'}`}>
+                    1
+                  </div>
+                  <div className={`h-1 w-8 ${currentStep >= 2 ? 'bg-blue-600' : 'bg-gray-200'} mx-1`}></div>
+                  <div className={`flex items-center justify-center h-8 w-8 rounded-full ${currentStep >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'}`}>
+                    2
+                  </div>
+                </div>
+                <div className="text-sm text-gray-500">
+                  Step {currentStep} of 2
+                </div>
               </div>
-              
-              <div className="flex justify-end space-x-2 pt-4">
-                <DialogClose asChild>
-                  <Button type="button" variant="outline">Cancel</Button>
-                </DialogClose>
-                <Button type="submit" className="bg-gradient-to-r from-primary to-primary/80">
-                  Pay Securely
-                </Button>
-              </div>
-            </form>
-          </Form>
+            </div>
+            
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`step-${currentStep}`}
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+              >
+                <Form {...form}>
+                  <form onSubmit={(e) => e.preventDefault()} className="space-y-5">
+                    {currentStep === 1 && (
+                      <>
+                        <motion.div variants={itemVariants}>
+                          <FormField
+                            control={form.control}
+                            name="upiId"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-gray-700">UPI ID</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    placeholder="example@upi" 
+                                    {...field} 
+                                    className="border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 py-5 px-4 rounded-lg" 
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </motion.div>
+                        
+                        <motion.div variants={itemVariants}>
+                          <FormField
+                            control={form.control}
+                            name="amount"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-gray-700">Amount (₹)</FormLabel>
+                                <FormControl>
+                                  <div className="relative">
+                                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₹</span>
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0.00" 
+                                      {...field} 
+                                      onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                                      className="border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 pl-8 py-5 px-4 rounded-lg" 
+                                    />
+                                  </div>
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </motion.div>
+                        
+                        <motion.div variants={itemVariants}>
+                          <FormField
+                            control={form.control}
+                            name="note"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-gray-700">Note (Optional)</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    placeholder="Add a note" 
+                                    {...field} 
+                                    className="border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 py-5 px-4 rounded-lg" 
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </motion.div>
+                      </>
+                    )}
+                    
+                    {currentStep === 2 && (
+                      <>
+                        <motion.div 
+                          variants={itemVariants} 
+                          className="mb-4 bg-blue-50 rounded-lg p-4 border border-blue-100"
+                        >
+                          <div className="flex justify-between items-center mb-2">
+                            <div className="text-sm text-gray-600">Amount</div>
+                            <div className="font-semibold text-gray-900">₹{form.getValues().amount.toFixed(2)}</div>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <div className="text-sm text-gray-600">To</div>
+                            <div className="font-semibold text-gray-900">{form.getValues().upiId}</div>
+                          </div>
+                        </motion.div>
+                        
+                        <motion.div variants={itemVariants}>
+                          <FormField
+                            control={form.control}
+                            name="pin"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-gray-700 flex items-center">
+                                  <Lock className="h-4 w-4 mr-1.5 text-blue-600" />
+                                  UPI PIN
+                                </FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    type="password" 
+                                    placeholder="Enter UPI PIN" 
+                                    {...field} 
+                                    className="border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-200 py-5 px-4 rounded-lg" 
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </motion.div>
+                      </>
+                    )}
+                    
+                    <motion.div variants={itemVariants} className="flex items-center justify-between mt-2">
+                      <div className="flex items-center space-x-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs py-1 px-2.5 rounded-full">
+                        <Shield className="h-3.5 w-3.5 mr-0.5" />
+                        <span>Blockchain Secured</span>
+                      </div>
+                      <div className="flex items-center space-x-1 text-xs text-gray-500">
+                        <Clock className="h-3.5 w-3.5 mr-0.5" />
+                        <span>Fee: ₹0 • ~1.2s</span>
+                      </div>
+                    </motion.div>
+                    
+                    <motion.div variants={itemVariants} className="text-sm text-gray-600 flex items-start space-x-2 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                      <Info className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
+                      <p>For amounts over ₹2,000, our secure verification system will be activated to protect your transaction.</p>
+                    </motion.div>
+                    
+                    <motion.div variants={itemVariants} className="flex justify-between space-x-3 pt-4">
+                      {currentStep === 1 ? (
+                        <>
+                          <Button type="button" variant="outline" onClick={closeAll} className="flex-1 border-gray-300 hover:bg-gray-50">
+                            Cancel
+                          </Button>
+                          <Button 
+                            type="button" 
+                            onClick={handleContinue} 
+                            className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
+                          >
+                            Continue
+                            <ChevronRight className="ml-1 h-4 w-4" />
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            onClick={() => { setCurrentStep(1); setShowPin(false); }} 
+                            className="flex-1 border-gray-300 hover:bg-gray-50"
+                          >
+                            Back
+                          </Button>
+                          <Button 
+                            type="button" 
+                            onClick={form.handleSubmit(onSubmit)} 
+                            className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
+                          >
+                            Pay Securely
+                            <Shield className="ml-1.5 h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
+                    </motion.div>
+                  </form>
+                </Form>
+              </motion.div>
+            </AnimatePresence>
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* Security verification modal */}
       <Dialog open={showSecurityCheck} onOpenChange={() => setShowSecurityCheck(false)}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md border-0 shadow-2xl bg-white rounded-xl overflow-hidden">
           <DialogHeader>
-            <DialogTitle>Security Verification</DialogTitle>
+            <DialogTitle className="text-xl font-bold bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent">
+              Security Verification
+            </DialogTitle>
           </DialogHeader>
           
           <SecurityVerification 
