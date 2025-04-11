@@ -9,11 +9,22 @@ import { PlusIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function Dashboard() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
+  const [isAddMoneyDialogOpen, setIsAddMoneyDialogOpen] = useState(false);
+  const [addAmount, setAddAmount] = useState("");
   const [stats, setStats] = useState({
     walletBalance: 0,
     monthlySpent: 0,
@@ -54,8 +65,23 @@ export default function Dashboard() {
     fetchUserData();
   }, [user, toast]);
 
-  const handleAddMoney = async () => {
-    if (!user) return;
+  const handleAddMoney = () => {
+    setIsAddMoneyDialogOpen(true);
+  };
+
+  const handleAddMoneySubmit = async () => {
+    if (!user || !addAmount) return;
+
+    const amount = parseFloat(addAmount);
+    
+    if (isNaN(amount) || amount <= 0) {
+      toast({
+        variant: "destructive",
+        title: "Invalid amount",
+        description: "Please enter a valid amount greater than 0.",
+      });
+      return;
+    }
 
     try {
       toast({
@@ -63,8 +89,7 @@ export default function Dashboard() {
         description: "Processing your request...",
       });
 
-      // For demo purposes, add 5000 to wallet
-      const response = await apiRequest("POST", `/api/users/${user.id}/add-funds`, { amount: 5000 });
+      const response = await apiRequest("POST", `/api/users/${user.id}/add-funds`, { amount });
       const data = await response.json();
 
       // Invalidate queries to refresh data
@@ -73,7 +98,7 @@ export default function Dashboard() {
 
       toast({
         title: "Funds added",
-        description: `₹5,000 has been added to your wallet.`,
+        description: `₹${amount.toLocaleString()} has been added to your wallet.`,
       });
 
       // Update local state
@@ -81,6 +106,10 @@ export default function Dashboard() {
         ...prev,
         walletBalance: data.user.walletBalance
       }));
+      
+      // Close dialog and reset input
+      setIsAddMoneyDialogOpen(false);
+      setAddAmount("");
     } catch (error) {
       console.error("Error adding funds:", error);
       toast({
@@ -111,6 +140,40 @@ export default function Dashboard() {
           </Button>
         </div>
       </div>
+      
+      {/* Add Money Dialog */}
+      <Dialog open={isAddMoneyDialogOpen} onOpenChange={setIsAddMoneyDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Add Money to Wallet</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="amount" className="text-right">
+                Amount
+              </Label>
+              <Input
+                id="amount"
+                type="number"
+                placeholder="Enter amount"
+                value={addAmount}
+                onChange={(e) => setAddAmount(e.target.value)}
+                className="col-span-3"
+                min="1"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              type="submit" 
+              onClick={handleAddMoneySubmit}
+              disabled={!addAmount || parseFloat(addAmount) <= 0}
+            >
+              Add Funds
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       
       {/* Balance Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
