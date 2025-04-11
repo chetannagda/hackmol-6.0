@@ -81,7 +81,7 @@ export default function Sidebar() {
           <div className="flex items-center justify-center h-20 border-b">
             <div className="flex items-center">
               <ShieldCheck className="h-8 w-8 text-primary mr-2" />
-              <h1 className="text-xl font-bold text-gray-800">PaySafe</h1>
+              <h1 className="text-xl font-bold text-gray-800">DFPG</h1>
             </div>
           </div>
           
@@ -116,7 +116,7 @@ export default function Sidebar() {
       <div className="lg:hidden flex items-center justify-between p-4 bg-white shadow-md sticky top-0 z-10">
         <div className="flex items-center">
           <ShieldCheck className="h-6 w-6 text-primary mr-2" />
-          <h1 className="text-lg font-bold text-gray-800">PaySafe</h1>
+          <h1 className="text-lg font-bold text-gray-800">DFPG</h1>
         </div>
         <Button variant="ghost" size="icon" onClick={toggleMobileMenu}>
           <Menu className="h-6 w-6" />
@@ -130,7 +130,7 @@ export default function Sidebar() {
             <div className="flex items-center justify-between p-4 border-b">
               <div className="flex items-center">
                 <ShieldCheck className="h-6 w-6 text-primary mr-2" />
-                <h1 className="text-lg font-bold text-gray-800">PaySafe</h1>
+                <h1 className="text-lg font-bold text-gray-800">DFPG</h1>
               </div>
               <Button variant="ghost" size="icon" onClick={closeMobileMenu}>
                 <X className="h-6 w-6" />

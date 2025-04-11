@@ -2,7 +2,12 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import themePlugin from "@replit/vite-plugin-shadcn-theme-json";
 import path from "path";
+import { fileURLToPath } from 'url';
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
+
+// Get the directory name equivalent to __dirname in ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export default defineConfig({
   root: path.resolve(__dirname, "./client"), // Set the root to the client directory

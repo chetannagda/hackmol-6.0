@@ -48,7 +48,7 @@ export default function Login() {
           <div className="flex justify-center mb-6">
             <div className="flex items-center">
               <ShieldCheck className="text-primary h-10 w-10 mr-2" />
-              <h1 className="text-2xl font-bold text-gray-800">PaySafe</h1>
+              <h1 className="text-2xl font-bold text-gray-800">DFPG</h1>
             </div>
           </div>
           <h2 className="text-xl font-semibold text-center mb-6">Sign In</h2>
