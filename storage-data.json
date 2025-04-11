@@ -9,7 +9,7 @@
       "phone": "6367426746",
       "id": 1,
       "upiId": null,
-      "walletBalance": 22090,
+      "walletBalance": 20090,
       "ethereumAddress": null,
       "createdAt": "2025-04-10T14:19:32.081Z"
     }
@@ -609,8 +609,59 @@
       "id": 35,
       "createdAt": "2025-04-11T04:02:46.885Z",
       "updatedAt": "2025-04-11T04:02:46.885Z"
+    },
+    "36": {
+      "senderId": 1,
+      "receiverId": null,
+      "receiverUpiId": "chetan@paysafe",
+      "receiverAccountNumber": null,
+      "receiverIfscCode": null,
+      "receiverEthAddress": null,
+      "amount": 1000,
+      "currency": "INR",
+      "type": "UPI",
+      "status": "COMPLETED",
+      "note": null,
+      "verificationCode": null,
+      "id": 36,
+      "createdAt": "2025-04-11T05:39:07.054Z",
+      "updatedAt": "2025-04-11T05:39:07.054Z"
+    },
+    "37": {
+      "senderId": 1,
+      "receiverId": null,
+      "receiverUpiId": "chetan@paysafe",
+      "receiverAccountNumber": null,
+      "receiverIfscCode": null,
+      "receiverEthAddress": null,
+      "amount": 1000,
+      "currency": "INR",
+      "type": "UPI",
+      "status": "COMPLETED",
+      "note": null,
+      "verificationCode": null,
+      "id": 37,
+      "createdAt": "2025-04-11T05:39:07.168Z",
+      "updatedAt": "2025-04-11T05:39:07.168Z"
+    },
+    "38": {
+      "senderId": 1,
+      "receiverId": null,
+      "receiverUpiId": "chetan@paysafe",
+      "receiverAccountNumber": null,
+      "receiverIfscCode": null,
+      "receiverEthAddress": null,
+      "amount": 1000,
+      "currency": "INR",
+      "type": "UPI",
+      "status": "COMPLETED",
+      "note": null,
+      "verificationCode": null,
+      "id": 38,
+      "createdAt": "2025-04-11T05:39:10.496Z",
+      "updatedAt": "2025-04-11T05:39:10.496Z"
     }
   },
   "currentUserId": 2,
-  "currentTransactionId": 36
+  "currentTransactionId": 39
 }
